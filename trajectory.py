@@ -39,7 +39,7 @@ class Trajectory():
         return self._member.getProbByUserId(userId=userId)
 
     def getGroupMembers(self, groupId):
-        return self._member.getUsersByGroup(groupId=groupId)
+        return self._member.getUserByGroup(groupId=groupId)
 
 if __name__ == "__main__":
     trajectorydata = pd.read_csv("./NYC_Trajectory_Simplified.csv")

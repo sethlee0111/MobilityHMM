@@ -5,6 +5,7 @@ from membership import MembershipVector
 class Trajectory():
     def __init__(self, group, dataframe):
         self._df = dataframe
+        self._trajectoryData = self.generateTrajectoryData()
         # initilize the membership vector
         self._member = MembershipVector(trajectorydata['UserID'].unique(), group)
         self._group = group
@@ -30,10 +31,12 @@ class Trajectory():
         return (data.values, length, proba)
 
     def getTrajectoryByUser(self, userId):
-        return
+        data = self._trajectoryData.loc[self._trajectoryData['UserID'] == userId]
+        data = data.drop(columns='UserID')
+        return data
 
     def getUserGroupProb(self, userId):
-        return
+        return self._member.getProbByUserId(userId=userId)
 
     def getGroupMembers(self, groupId):
         return self._member.getUsersByGroup(groupId=groupId)

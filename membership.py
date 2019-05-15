@@ -7,16 +7,26 @@ class MembershipVector():
     groupNum: a integer
     """
     def __init__(self, userList, groupNum):
-        # randomly initilize the proba
-        # init the userNumber and groupNumber to an map of user
-        self.member = map()
-        for userId in userList:
-            self.member.append(userId, nparray)
-
-    def getProbByUserId(self, userId):
-        return
-
-    """ return the maximum probablity that a group contains which user
+        # randomly initilize the prob
+        # init the userID and group Probability to a map of user
+        self.dict = {}
+        self.userList = userList
+        for i in userList:
+            self.dict[i] = np.random.dirichlet(np.ones(groupNum))
+        print(self.dict)
+        
+    """ return group prob list of the input user
     """
-    def getUserGroupProb(self, groupId):
-        return
+    def getProbByUserId(self, userId):
+
+        return self.dict[userId].tolist()
+
+    """ return userID in the input group, group ID starts from 0
+    """
+    def getUserByGroup(self, groupId):
+        groupList=[]
+        for i in self.userList:
+            userProb = self.dict[i].tolist()
+            if userProb.index(max(userProb)) == groupId:
+                groupList.append(i)
+        return groupList

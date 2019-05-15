@@ -20,7 +20,7 @@ class MembershipVector():
         """
         Get the probability that the user belongs to this group
         """
-        return
+        return self.dict[userId].tolist()[groupId]
 
     def getProbByUserId(self, userId):
         """

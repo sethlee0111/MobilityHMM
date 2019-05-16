@@ -8,7 +8,9 @@ class Trajectory():
 
         data = self._df.drop(columns='Timegap')
         data = data[['UserID','Latitude','Longitude','Time','Venue category name','Trajectory']]
-        data['Time'] = data['Time'].apply(lambda x: str(x)[-5:])
+        # convert Time to seconds
+        data['Time'] = data['Time'].apply(lambda x: str(x)[-8:])
+        data['Time'] = data['Time'].apply(lambda x: (int(str(x)[0:2]) * 60 + int(str(x)[3:5])) * 60 + int(str(x)[6:8]) )
         # encode venue category to id
         data['Venue category name'] = pd.Categorical(data['Venue category name'])
         data['VenueID'] = data['Venue category name'].cat.codes

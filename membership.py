@@ -45,7 +45,12 @@ class MembershipVector():
     def getMeanProbByGroup(self, groupId):
         """P(g) = Sum u∈U Mu(g)/|U|.
         """
-        return
+        sum = 0
+        for i in self.userList:
+            userProb = self.dict[i].tolist()
+            sum += userProb[groupId]
+        return sum/self.groupNum
 
-    def setProbByGroupUser(self, groupId, userId):
-        pass
+    def setProbByGroupUser(self, prob, userId, groupId):
+        self.dict[userId][groupId] = prob
+        return 

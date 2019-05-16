@@ -41,3 +41,8 @@ class MembershipVector():
             if userProb.index(max(userProb)) == groupId:
                 groupList.append(i)
         return groupList
+
+    def getMeanProbByGroup(self, groupId):
+        """P(g) = Sum u∈U Mu(g)/|U|.
+        """
+        return

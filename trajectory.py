@@ -3,7 +3,7 @@ import numpy as np
 from membership import MembershipVector
 
 class Trajectory():
-    def __init__(self, group, dataframe):
+    def __init__(self, dataframe):
         self._df = dataframe
 
         data = self._df.drop(columns='Timegap')
@@ -15,15 +15,11 @@ class Trajectory():
         data['Venue category name'] = pd.Categorical(data['Venue category name'])
         data['VenueID'] = data['Venue category name'].cat.codes
         self._venuedDict = dict(enumerate(data['Venue category name'].cat.categories))
-        
         # print(data['Time'].apply(lambda x: (int(str(x)[0:2]) * 24 + int(str(x)[3:5]))))
+        data = data.drop(columns='Venue category name')
         self._data = data
-        # initilize the membership vector
-        self._member = MembershipVector(trajectorydata['UserID'].unique(), group)
-        self._group = group
 
-
-    def getData(self, groupId):
+    def getData(self, groupId, member):
         """get training data based on group
         """
         rawdata = self._data
@@ -32,28 +28,27 @@ class Trajectory():
         proba = []
         userList = rawdata.groupby('Trajectory')['UserID'].unique().values
         for user in userList:
-            proba.append(self._member.getUserProbByGroup(userId=user[0],groupId=groupId))
+            proba.append(member.getUserProbByGroup(userId=user[0],groupId=groupId))
         data = rawdata.drop(columns='Trajectory')
-        data = data.drop(columns='Venue category name')
         data = data.drop(columns='UserID')
-        print(data)
         return (data.values, length, proba)
 
     def getTrajectoryByUser(self, userId):
         data = self._data.loc[self._data['UserID'] == userId]
         data = data.drop(columns='UserID')
-        return data
+        groups = data.groupby('Trajectory')
+        arr = []
+        for name, group in groups:
+            arr.append(group.values)
+        return arr
 
-    def getUserGroupProb(self, userId):
-        return self._member.getProbByUserId(userId=userId)
-
-    def getGroupMembers(self, groupId):
-        return self._member.getUserByGroup(groupId=groupId)
 
 if __name__ == "__main__":
     trajectorydata = pd.read_csv("./NYC_Trajectory_Simplified.csv")
-    t = Trajectory(100,trajectorydata)
-    data,length,proba = t.getData(1)
+    member = MembershipVector(trajectorydata['UserID'].unique(), 10)
+    t = Trajectory(trajectorydata)
+    #data,length,proba = t.getData(1, member)
+    t.getTrajectoryByUser(1)
     #print(data)
     #print(length)
     #print(proba)

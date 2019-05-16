@@ -46,3 +46,6 @@ class MembershipVector():
         """P(g) = Sum u∈U Mu(g)/|U|.
         """
         return
+
+    def setProbByGroupUser(self, groupId, userId):
+        pass

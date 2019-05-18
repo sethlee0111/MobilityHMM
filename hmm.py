@@ -83,6 +83,9 @@ class GroupLevelHMM(_BaseHMM):
 
 		self.X_loc = []
 
+	def set_weights(self, weights):
+		self._weights = weights
+
 	def _init(self, X, lengths=None):
 		"""
 		Initializes model parameters prior to fitting.

@@ -33,6 +33,22 @@ class Trajectory():
         data = data.drop(columns='UserID')
         return (data.values, length, proba)
 
+    def getDataWithAllGroups(self, member):
+        """get test data based on group, with all the group proba
+        """
+        rawdata = self._data
+        length = np.asarray(rawdata.groupby('Trajectory').count()['Time'])
+        ## Get probability of the user belongs to group
+        proba = []
+        userList = rawdata.groupby('Trajectory')['UserID'].unique().values
+        for user in userList:
+            proba.append(member.getProbByUserId(userId=user[0]))
+        data = rawdata.drop(columns='Trajectory')
+        data = data.drop(columns='UserID')
+        return (data.values, length, proba)
+
+
+
     def getBaseModelData(self):
         """get base model data -> only venue id
         """
@@ -62,7 +78,7 @@ if __name__ == "__main__":
     t = Trajectory(trajectorydata)
     #data,length,proba = t.getData(1, member)
     #t.getTrajectoryByUser(1)
-    t.getBaseModelData()
+    data,length,proba = t.getDataWithAllGroups(member)
     #print(data)
     #print(length)
     #print(proba)

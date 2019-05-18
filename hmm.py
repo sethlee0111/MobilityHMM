@@ -178,7 +178,8 @@ class GroupLevelHMM(_BaseHMM):
 		Split the given ```X``` according to loc, time, and category
 
 		"""
-		return X[:,:2], X[:,2:3], X[:,3:4]
+		X_category = X[:,3:4].astype('int')
+		return X[:,:2], X[:,2:3], X_category
 
 
 	def _check(self):
@@ -267,7 +268,7 @@ class GroupLevelHMM(_BaseHMM):
 		3rd coulmn from uni-variate, and 4th from multinomial
 		"""
 		if not self._check_multinomial(self.X_category):
-			raise ValueError("Expected a sample from a Multinomial Distribution"
+			raise ValueError("Expected samples from a Multinomial Distribution"
 							 " for a 4th column")
 	def _compute_log_likelihood(self, X):
 		"""

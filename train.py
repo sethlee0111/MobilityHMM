@@ -18,17 +18,19 @@ def main():
 													 for i in range(GROUP_NUM)]
 
 	for n in range(3):
+		print("STAGE : " + n)
 		# iterate through groups
 		for i in range(1, GROUP_NUM+1):
+			print("LEARNING FOR GROUP " + i)
 			data, length, proba = t.getData(i, member)
 			models[i].set_weights(proba)
 			models[i].fit(data, length)
 
+		print("Grouping...")
 		# Grouping and update
 		for i in range(1, GROUP_NUM+1):
 			g = Group(hmm=models[i], membership=member, trajectory=t, groupId=i)
 			member = g.update()
-
 
 	#t.getTrajectoryByUser(1)
 	t.getBaseModelData()

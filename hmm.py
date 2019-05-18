@@ -7,11 +7,11 @@
 import numpy as np
 from sklearn import cluster
 from sklearn.utils import check_random_state
-from hmmlearn import hmm, base
+from hmmlearn import hmm, base, _hmmc
 
 from hmmlearn import _utils
 from hmmlearn.base import _BaseHMM
-from hmmlearn.utils import fill_covars, iter_from_X_lengths, normalize
+from hmmlearn.utils import fill_covars, normalize, log_normalize, iter_from_X_lengths, log_mask_zero
 from hmmlearn.stats import log_multivariate_normal_density
 
 COVARIANCE_TYPES = frozenset(("spherical", "diag", "full", "tied"))
@@ -44,8 +44,8 @@ class GroupLevelHMM(_BaseHMM):
 	"""
 
 
-	def __init__(self, n_components=1, loc_covariance_type='diag',
-				 time_covariance_type='diag',
+	def __init__(self, n_components=1, loc_covariance_type='full',
+				 time_covariance_type='full',
 				 loc_min_covar=1e-3,
 				 time_min_covar=1e-3,
 
@@ -195,9 +195,9 @@ class GroupLevelHMM(_BaseHMM):
 			raise ValueError('covariance_type must be one of {}'
 							 .format(COVARIANCE_TYPES))
 
-		_utils._validate_covars(self.loc_covars_, self.loc_covariance_type,
+		_utils._validate_covars(self._loc_covars_, self.loc_covariance_type,
 								self.n_components)
-		_utils._validate_covars(self.time_covars_, self.time_covariance_type,
+		_utils._validate_covars(self._time_covars_, self.time_covariance_type,
 								self.n_components)
 
 	@property
@@ -273,10 +273,10 @@ class GroupLevelHMM(_BaseHMM):
 		X_loc, X_time, X_category = self._split_X_by_features(X)
 
 		loc_ll = log_multivariate_normal_density(
-			X_loc, self.loc_means_, self._loc_covars_, self.loc_covariance_type)
+			X_loc, self.loc_means_, self.loc_covars_, self.loc_covariance_type)
 
 		time_ll = log_multivariate_normal_density(
-			X_time, self.time_means_, self._time_covars_, self.time_covariance_type)
+			X_time, self.time_means_, self.time_covars_, self.time_covariance_type)
 
 		category_ll = np.log(self.category_emissionprob_)[:, np.concatenate(X_category)].T
 
@@ -333,13 +333,15 @@ class GroupLevelHMM(_BaseHMM):
 		stats['time_obs**2'] = np.zeros((self.n_components, 1))
 		stats['cat_obs'] = np.zeros((self.n_components, self.n_categories))
 
-		return stats
 		# @TODO figure out this part
-		if self.covariance_type in ('tied', 'full'):
+		if self.loc_covariance_type in ('tied', 'full'):
 			stats['loc_obs*obs.T'] = np.zeros((self.n_components, 2,\
 										   2))
+		if self.time_covariance_type in ('tied', 'full'):
 			stats['time_obs*obs.T'] = np.zeros((self.n_components, 1,\
 										   1))
+
+		return stats
 
 	def _accumulate_sufficient_statistics(self, stats, obs, framelogprob,
 										  posteriors, fwdlattice, bwdlattice):
@@ -402,9 +404,9 @@ class GroupLevelHMM(_BaseHMM):
 				# posteriors: (nt, nc); obs: (nt, nf); obs: (nt, nf)
 				# -> (nc, nf, nf)
 				stats['loc_obs*obs.T'] += w_r * np.einsum(
-					'ij,ik,il->jkl', posteriors, loc_obs, loc_obs)
+					'ij,ik,il->jkl', posteriors, obs_loc, obs_loc)
 				stats['time_obs*obs.T'] += w_r * np.einsum(
-					'ij,ik,il->jkl', posteriors, time_obs, time_obs)
+					'ij,ik,il->jkl', posteriors, obs_time, obs_time)
 
 		if 'e' in self.params:
 			for t, symbol in enumerate(np.concatenate(obs_category)):
@@ -480,6 +482,7 @@ class GroupLevelHMM(_BaseHMM):
 						self._loc_covars_.mean(1)[:, np.newaxis],
 						(1, self._loc_covars_.shape[1]))
 
+		
 			if self.time_covariance_type in ('spherical', 'diag'):
 				time_cv_num = (time_means_weight * time_meandiff**2
 						  + stats['time_obs**2']
@@ -496,26 +499,45 @@ class GroupLevelHMM(_BaseHMM):
 						self._time_covars_.mean(1)[:, np.newaxis],
 						(1, self._time_covars_.shape[1]))
 
-			elif self.covariance_type in ('tied', 'full'):
-				raise NotImplementedError("covariance_type for tied and full")
-				# cv_num = np.empty((self.n_components, self.n_features,
-				#                 self.n_features))
-				# for c in range(self.n_components):
-				#   obsmean = np.outer(stats['obs'][c], self.means_[c])
+			if self.loc_covariance_type in ('tied', 'full'):
+				cv_num = np.empty((self.n_components, 2,
+				                2)) 	# n_features for gaussianHMM : 2
+				for c in range(self.n_components):
+				  obsmean = np.outer(stats['loc_obs'][c], self.loc_means_[c])
 
-				#   cv_num[c] = (means_weight * np.outer(meandiff[c],
-				#                                        meandiff[c])
-				#                + stats['obs*obs.T'][c]
-				#                - obsmean - obsmean.T
-				#                + np.outer(self.means_[c], self.means_[c])
-				#                * stats['post'][c])
-				# cvweight = max(covars_weight - self.n_features, 0)
-				# if self.covariance_type == 'tied':
-				#   self._covars_ = ((covars_prior + cv_num.sum(axis=0)) /
-				#                    (cvweight + stats['post'].sum()))
-				# elif self.covariance_type == 'full':
-				#   self._covars_ = ((covars_prior + cv_num) /
-				#                    (cvweight + stats['post'][:, None, None]))
+				  cv_num[c] = (loc_means_weight * np.outer(loc_meandiff[c],
+				                                       loc_meandiff[c])
+				               + stats['loc_obs*obs.T'][c]
+				               - obsmean - obsmean.T
+				               + np.outer(self.loc_means_[c], self.loc_means_[c])
+				               * stats['post'][c])
+				cvweight = max(loc_covars_weight - 2, 0)
+				if self.loc_covariance_type == 'tied':
+				  self._loc_covars_ = ((loc_covars_prior + cv_num.sum(axis=0)) /
+				                   (cvweight + stats['post'].sum()))
+				elif self.loc_covariance_type == 'full':
+				  self._loc_covars_ = ((loc_covars_prior + cv_num) /
+				                   (cvweight + stats['post'][:, None, None]))
+
+			if self.time_covariance_type in ('tied', 'full'):
+				cv_num = np.empty((self.n_components, 1,
+				                1)) 	# n_features for gaussianHMM : 2
+				for c in range(self.n_components):
+				  obsmean = np.outer(stats['time_obs'][c], self.time_means_[c])
+
+				  cv_num[c] = (time_means_weight * np.outer(time_meandiff[c],
+				                                       time_meandiff[c])
+				               + stats['time_obs*obs.T'][c]
+				               - obsmean - obsmean.T
+				               + np.outer(self.time_means_[c], self.time_means_[c])
+				               * stats['post'][c])
+				cvweight = max(time_covars_weight - 1, 0)
+				if self.time_covariance_type == 'tied':
+				  self._time_covars_ = ((time_covars_prior + cv_num.sum(axis=0)) /
+				                   (cvweight + stats['post'].sum()))
+				elif self.time_covariance_type == 'full':
+				  self._time_covars_ = ((time_covars_prior + cv_num) /
+				                   (cvweight + stats['post'][:, None, None]))
 
 			if 'e' in self.params:
 				self.emissionprob_ = (stats['cat_obs']

@@ -11,6 +11,7 @@ class MembershipVector():
             userList: a list of user ID
             groupNum: a integer
         """
+        self.groupNum = groupNum
         self.dict = {}
         self.userList = userList
         for i in userList:

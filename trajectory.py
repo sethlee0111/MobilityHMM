@@ -33,6 +33,19 @@ class Trajectory():
         data = data.drop(columns='UserID')
         return (data.values, length, proba)
 
+    def getBaseModelData(self):
+        """get base model data -> only venue id
+        """
+        rawdata = self._data
+        length = np.asarray(rawdata.groupby('Trajectory').count()['Time'])
+        ## Get probability of the user belongs to group
+        data = rawdata.drop(columns='Trajectory')
+        data = data.drop(columns='UserID')
+        data = data.drop(columns='Latitude')
+        data = data.drop(columns='Time')
+        data = data.drop(columns='Longtitude')
+        return (data.values, length, proba)
+
     def getTrajectoryByUser(self, userId):
         data = self._data.loc[self._data['UserID'] == userId]
         data = data.drop(columns='UserID')

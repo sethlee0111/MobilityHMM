@@ -44,7 +44,7 @@ class Trajectory():
         data = data.drop(columns='Latitude')
         data = data.drop(columns='Time')
         data = data.drop(columns='Longtitude')
-        return (data.values, length, proba)
+        return (data.values, length)
 
     def getTrajectoryByUser(self, userId):
         data = self._data.loc[self._data['UserID'] == userId]

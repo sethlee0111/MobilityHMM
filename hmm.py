@@ -195,9 +195,9 @@ class GroupLevelHMM(_BaseHMM):
 			raise ValueError('covariance_type must be one of {}'
 							 .format(COVARIANCE_TYPES))
 
-		_utils._validate_covars(self.loc_covars_, self.loc_covariance_type,
+		_utils._validate_covars(self._loc_covars_, self.loc_covariance_type,
 								self.n_components)
-		_utils._validate_covars(self.time_covars_, self.time_covariance_type,
+		_utils._validate_covars(self._time_covars_, self.time_covariance_type,
 								self.n_components)
 
 	@property
@@ -273,10 +273,10 @@ class GroupLevelHMM(_BaseHMM):
 		X_loc, X_time, X_category = self._split_X_by_features(X)
 
 		loc_ll = log_multivariate_normal_density(
-			X_loc, self.loc_means_, self._loc_covars_, self.loc_covariance_type)
+			X_loc, self.loc_means_, self.loc_covars_, self.loc_covariance_type)
 
 		time_ll = log_multivariate_normal_density(
-			X_time, self.time_means_, self._time_covars_, self.time_covariance_type)
+			X_time, self.time_means_, self.time_covars_, self.time_covariance_type)
 
 		category_ll = np.log(self.category_emissionprob_)[:, np.concatenate(X_category)].T
 
@@ -479,6 +479,10 @@ class GroupLevelHMM(_BaseHMM):
 					self._loc_covars_ = np.tile(
 						self._loc_covars_.mean(1)[:, np.newaxis],
 						(1, self._loc_covars_.shape[1]))
+
+			
+
+
 
 			if self.time_covariance_type in ('spherical', 'diag'):
 				time_cv_num = (time_means_weight * time_meandiff**2

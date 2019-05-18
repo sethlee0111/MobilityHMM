@@ -43,7 +43,7 @@ class Trajectory():
         data = data.drop(columns='UserID')
         data = data.drop(columns='Latitude')
         data = data.drop(columns='Time')
-        data = data.drop(columns='Longtitude')
+        data = data.drop(columns='Longitude')
         return (data.values, length)
 
     def getTrajectoryByUser(self, userId):
@@ -61,7 +61,8 @@ if __name__ == "__main__":
     member = MembershipVector(trajectorydata['UserID'].unique(), 10)
     t = Trajectory(trajectorydata)
     #data,length,proba = t.getData(1, member)
-    t.getTrajectoryByUser(1)
+    #t.getTrajectoryByUser(1)
+    t.getBaseModelData()
     #print(data)
     #print(length)
     #print(proba)

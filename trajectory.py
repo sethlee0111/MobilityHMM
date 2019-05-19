@@ -61,6 +61,20 @@ class Trajectory():
         data = data.drop(columns='Time')
         data = data.drop(columns='Longitude')
         return (data.values, length)
+    
+
+    def getGaussianBaseModelData(self):
+        """get base Gaussian model data -> only venue location coordinates
+        """
+        rawdata = self._data
+        length = np.asarray(rawdata.groupby('Trajectory').count()['Time'])
+        ## Get probability of the user belongs to group
+        data = rawdata.drop(columns='Trajectory')
+        data = data.drop(columns='UserID')
+        data = data.drop(columns='VenueID')
+        data = data.drop(columns='Time')
+        return (data.values, length)
+
 
     def getTrajectoryByUser(self, userId):
         data = self._data.loc[self._data['UserID'] == userId]

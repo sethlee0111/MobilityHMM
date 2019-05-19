@@ -55,3 +55,17 @@ class MembershipVector():
     def setProbByGroupUser(self, prob, userId, groupId):
         self.dict[userId][groupId] = prob
         return 
+
+    def check_normal(self):
+        for key in self.dict:
+            sum_prob = self.dict[key]
+            if sum_prob != 1:
+                raise ValueError("The sum of the membership vector should be 1")
+
+    def normalize(self):
+        for key in self.dict:
+            self.dict[key] = [float(i)/sum(self.dict[key]) for i in self.dict[key]]
+
+
+
+

@@ -17,7 +17,7 @@ class Group():
         p_g = self._membership.getMeanProbByGroup(self._groupId)
         for userId in member.userList:
             trajectoryArray = self._trajectory.getTrajectoryByUser(userId)
-            p_ugH = 1
+            p_ugH = 0
             for trajectory in trajectoryArray:
                 p_ugH += self._hmm.score(trajectory)
             p_guH = p_ugH + p_g

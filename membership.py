@@ -64,7 +64,7 @@ class MembershipVector():
 
     def normalize(self):
         for key in self.dict:
-            self.dict[key] = [float(i)/sum(self.dict[key]) for i in self.dict[key]]
+            self.dict[key] = np.concatenate(normalize(self.dict[key].reshape(1,-1)))
 
 
 

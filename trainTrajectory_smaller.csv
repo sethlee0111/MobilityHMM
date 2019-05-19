@@ -1,4 +1,4 @@
-UserID,Venue category name,Latitude,Longitude,NYCtime,Timegap,Trajectory,VenueID
+UserID,Venue category name,Latitude,Longitude,Time,Timegap,Trajectory,VenueID
 1,General Entertainment,40.73939794,-73.99320973,4/8/2012 14:20,1 days 00:38:05.000000000,1,107
 1,American Restaurant,40.785677,-73.97649799999998,4/8/2012 16:02,0 days 01:41:41.000000000,1,3
 1,Bar,40.76066702,-73.99494767,4/13/2012 21:11,0 days 09:29:39.000000000,2,22

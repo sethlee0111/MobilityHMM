@@ -1,4 +1,4 @@
-UserID,Venue category name,Latitude,Longitude,NYCtime,Timegap,Trajectory,VenueID
+UserID,Venue category name,Latitude,Longitude,Time,Timegap,Trajectory,VenueID
 1,Sandwich Place,40.72082277,-74.01009266,4/16/2012 11:54,1 days 16:38:10.000000000,4,198
 1,Park,40.72028976,-74.00542734,4/16/2012 13:56,0 days 02:02:19.000000000,4,169
 1,Gift Shop,40.775911,-73.980051,5/1/2012 18:08,2 days 01:22:53.000000000,7,110

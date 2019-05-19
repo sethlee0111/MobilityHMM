@@ -12,7 +12,9 @@ class Trajectory():
         data['Time'] = data['Time'].apply(lambda x: str(x)[-8:])
         data['Time'] = data['Time'].apply(lambda x: (int(str(x)[0:2]) * 60 + int(str(x)[3:5])) * 60 + int(str(x)[6:8]) )
         # encode venue category to id
+        
         data['Venue category name'] = pd.Categorical(data['Venue category name'])
+        self._dataCategory = data.copy()
         data['VenueID'] = data['Venue category name'].cat.codes
         self._venuedDict = dict(enumerate(data['Venue category name'].cat.categories))
         # print(data['Time'].apply(lambda x: (int(str(x)[0:2]) * 24 + int(str(x)[3:5]))))
@@ -32,6 +34,32 @@ class Trajectory():
         data = rawdata.drop(columns='Trajectory')
         data = data.drop(columns='UserID')
         return (data.values, length, proba)
+
+    def getDataByUserGroup(self, users):
+        """get training data based on group
+        """
+        data = self._df
+
+        data = data.drop(columns='Timegap')
+        data = data[['UserID','Latitude','Longitude','Time','Venue category name','Trajectory']]
+        # convert Time to seconds
+        data['Time'] = data['Time'].apply(lambda x: str(x)[-8:])
+        data['Time'] = data['Time'].apply(lambda x: (int(str(x)[0:2]) * 60 + int(str(x)[3:5])) * 60 + int(str(x)[6:8]) )
+        # encode venue category to id
+        
+        data = data.loc[data['UserID'].isin(users)]
+        data = data.drop(columns='UserID')
+        data['Venue category name'] = pd.Categorical(data['Venue category name'])
+        data['VenueID'] = data['Venue category name'].cat.codes
+        
+        venuedDict = dict(enumerate(data['Venue category name'].cat.categories))
+        data = data.drop(columns='Venue category name')
+        length = np.asarray(data.groupby('Trajectory').count()['Time'])
+        data = data.drop(columns='Trajectory')
+        proba = np.ones(len(length))
+        # print(data)
+
+        return (data.values, length, proba, venuedDict)
 
     def getDataWithAllGroups(self, member):
         """get test data based on group, with all the group proba
@@ -86,13 +114,16 @@ class Trajectory():
         return arr
 
 
+
 if __name__ == "__main__":
     trajectorydata = pd.read_csv("./NYC_Trajectory_Simplified.csv")
     member = MembershipVector(trajectorydata['UserID'].unique(), 10)
     t = Trajectory(trajectorydata)
+    data,length,proba, dic = t.getDataByUserGroup([1,2,3,4,5])
+    #print(proba)
     #data,length,proba = t.getData(1, member)
     #t.getTrajectoryByUser(1)
-    data,length,proba = t.getDataWithAllGroups(member)
+    #data,length,proba = t.getDataWithAllGroups(member)
     #print(data)
     #print(length)
     #print(proba)

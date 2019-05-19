@@ -201,7 +201,7 @@ class GroupLevelHMM(_BaseHMM):
 								self.n_components)
 		_utils._validate_covars(self._time_covars_, self.time_covariance_type,
 								self.n_components)
-		_check_input_symbols()
+		self._check_input_symbols()
 
 	@property
 	def loc_covars_(self):

@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+from sklearn.preprocessing import normalize
 
 class MembershipVector():
     def __init__(self, userList, groupNum):

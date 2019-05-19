@@ -22,5 +22,7 @@ class Group():
                 p_ugH += self._hmm.score(trajectory)
             p_guH = p_ugH + p_g
             member.setProbByGroupUser(p_guH, userId, self._groupId)
+            
+        member.normalize()
 
         return member

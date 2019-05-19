@@ -155,8 +155,6 @@ class GroupLevelHMM(_BaseHMM):
 				_utils.distribute_covar_matrix_to_match_covariance_type(
 					cv_time, self.time_covariance_type, self.n_components).copy()
 
-		self._check_input_symbols() # check if category column in ``X`` follows
-									# multinomial distribution
 		self.random_state = check_random_state(self.random_state)
 
 		if 'e' in self.init_params:

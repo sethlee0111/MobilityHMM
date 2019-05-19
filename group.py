@@ -21,8 +21,9 @@ class Group():
             for trajectory in trajectoryArray:
                 p_ugH += self._hmm.score(trajectory)
             p_guH = p_ugH + p_g
+            p_guH = np.exp(p_guH)
             member.setProbByGroupUser(p_guH, userId, self._groupId)
-            
+
         member.normalize()
 
         return member

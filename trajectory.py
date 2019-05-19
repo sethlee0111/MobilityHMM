@@ -103,16 +103,18 @@ class Trajectory():
         groups = data.groupby('Trajectory')
         arr = []
         for name, group in groups:
-            arr.append(group.values)
+            #print(group.drop(columns='Trajectory'))
+            arr.append(group.drop(columns='Trajectory').values)
         return arr
 
 
 
 if __name__ == "__main__":
-    trajectorydata = pd.read_csv("./NYC_Trajectory_Simplified.csv")
+    trajectorydata = pd.read_csv("./trainTrajectory_final.csv")
     member = MembershipVector(trajectorydata['UserID'].unique(), 10)
     t = Trajectory(trajectorydata)
-    data,length,proba, dic = t.getDataByUserGroup([1,2,3,4,5])
+    #data,length,proba, dic = t.getDataByUserGroup([1,2,3,4,5])
+    print(t.getTrajectoryByUser(2))
     #print(proba)
     #data,length,proba = t.getData(1, member)
     #t.getTrajectoryByUser(1)

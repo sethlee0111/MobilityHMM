@@ -19,7 +19,7 @@ class Group():
             trajectoryArray = self._trajectory.getTrajectoryByUser(userId)
             p_ugH = 1
             for trajectory in trajectoryArray:
-                p_ugh = p_ugh * self._hmm._compute_log_likelihood(trajectory)
+                p_ugH = p_ugH * self._hmm._compute_log_likelihood(trajectory)
             p_guH = p_ugH * p_g
             member.setProbByGroupUser(p_guH, userId, self._groupId)
 

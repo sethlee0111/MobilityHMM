@@ -63,6 +63,9 @@ class MembershipVector():
             if sum_prob != 1:
                 raise ValueError("The sum of the membership vector should be 1")
 
+    def getProbOfUser(self, id):
+        return self.dict[id]
+
     def normalize(self):
         for key in self.dict:
             if not (self.dict[key] > 0).all:

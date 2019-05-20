@@ -90,7 +90,7 @@ def main_multiprocess():
 		group_list = []
 		for i in range(0, GROUP_NUM):
 			group_list.append(Group(hmm=models[i], membership=member, trajectory=t, groupId=i))
-		manager = mp.manager()
+		manager = mp.Manager()
 		m_group_list = manager.list(group_list)
 		p = mp.Pool(processes=mp.cpu_count()-1)
 		m_group_list = p.map(update_group, m_group_list)

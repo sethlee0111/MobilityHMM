@@ -65,6 +65,9 @@ class MembershipVector():
 
     def normalize(self):
         for key in self.dict:
+            if not (self.dict[key] > 0).all:
+                raise ValueError("Probability is negative: " + str(self.dict[key]))
+        for key in self.dict:
             self.dict[key] = np.concatenate(normalize(self.dict[key].reshape(1,-1)))
 
 

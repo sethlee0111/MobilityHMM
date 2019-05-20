@@ -8,16 +8,16 @@ class Localization():
     """
     def __init__(self, df):
         self._data = df
-        #self.userList = df['User ID'].unique()
-        self.userList = []
-        for i in range(1,50):
-            self.userList.append(i)
+        self.userList = df['UserID'].unique()
+        # self.userList = []
+        # for i in range(1,80):
+        #     self.userList.append(i)
         self.dict = {}
         for userId in self.userList:
-            self.dict[userId] = df.loc[df['User ID'] == userId]['Venue category ID'].unique()
+            self.dict[userId] = df.loc[df['UserID'] == userId]['Venue category ID'].unique()
 
     def grouping(self, groupNum):
-        random.seed(42)
+        random.seed(5201314)
         group = {}
         for i in self.dict.keys():
             l = str(i)
@@ -66,7 +66,7 @@ class Localization():
 def main():
     trajectorydata = pd.read_csv("./VenueID_data.csv")
     l = Localization(trajectorydata)
-    re = l.grouping(5)
+    re = l.grouping(80)
     print(re)
     
 

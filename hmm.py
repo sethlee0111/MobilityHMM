@@ -336,6 +336,12 @@ class GroupLevelHMM(_BaseHMM):
 		stats['time_obs**2'] = np.zeros((self.n_components, 1))
 		stats['cat_obs'] = np.zeros((self.n_components, self.n_categories))
 
+		stats['loc_obs_for_mean'] = np.zeros((self.n_components, 2))
+		stats['time_obs_for_mean'] = np.zeros((self.n_components, 1))
+
+		stats['gamma'] = np.zeros(self.n_components)
+		stats['xi'] = np.zeros(self.n_components)
+
 		# @TODO figure out this part
 		if self.loc_covariance_type in ('tied', 'full'):
 			stats['loc_obs*obs.T'] = np.zeros((self.n_components, 2,\
@@ -373,7 +379,7 @@ class GroupLevelHMM(_BaseHMM):
 		# formula (1) from the paper - only the part inside sigma
 		stats['nobs'] += 1  # current sample
 		if 's' in self.params:
-			stats['start'] += w_r * posteriors[0]
+			stats['start'] += posteriors[0]
 
 		if 't' in self.params:
 			n_samples, n_components = framelogprob.shape
@@ -388,33 +394,36 @@ class GroupLevelHMM(_BaseHMM):
 									  log_mask_zero(self.transmat_),
 									  bwdlattice, framelogprob,
 									  log_xi_sum)
-			log_xi_sum *= w_r
 			with np.errstate(under="ignore"):
-				stats['trans'] += np.exp(log_xi_sum)
+				stats['trans'] += w_r * np.exp(log_xi_sum)
 
 		obs_loc, obs_time, obs_category = self._split_X_by_features(obs)    # @TODO valid?
 
 		if 'm' in self.params or 'c' in self.params:
-			stats['post'] += w_r * posteriors.sum(axis=0)
-			stats['loc_obs'] += w_r * np.dot(posteriors.T, obs_loc)
-			stats['time_obs'] += w_r * np.dot(posteriors.T, obs_time)
+			stats['post'] += posteriors.sum(axis=0)
+			stats['loc_obs_for_mean'] += w_r * np.dot(posteriors.T, obs_loc)
+			stats['time_obs_for_mean'] += w_r * np.dot(posteriors.T, obs_time)
+			stats['loc_obs'] += np.dot(posteriors.T, obs_loc)
+			stats['time_obs'] += np.dot(posteriors.T, obs_time)
 
 		if 'c' in self.params:
 			if self.loc_covariance_type in ('spherical', 'diag'):
-				stats['loc_obs**2'] += w_r * np.dot(posteriors.T, loc_obs ** 2)
-				stats['time_obs**2'] += w_r * np.dot(posteriors.T, time_obs ** 2)
+				stats['loc_obs**2'] += np.dot(posteriors.T, loc_obs ** 2)
+				stats['time_obs**2'] += np.dot(posteriors.T, time_obs ** 2)
 			elif self.loc_covariance_type in ('tied', 'full'):
 				# posteriors: (nt, nc); obs: (nt, nf); obs: (nt, nf)
 				# -> (nc, nf, nf)
-				stats['loc_obs*obs.T'] += w_r * np.einsum(
+				stats['loc_obs*obs.T'] += np.einsum(
 					'ij,ik,il->jkl', posteriors, obs_loc, obs_loc)
-				stats['time_obs*obs.T'] += w_r * np.einsum(
+				stats['time_obs*obs.T'] += np.einsum(
 					'ij,ik,il->jkl', posteriors, obs_time, obs_time)
 
 		if 'e' in self.params:
 			for t, symbol in enumerate(np.concatenate(obs_category)):
 				stats['cat_obs'][:, symbol] += w_r * posteriors[t]
 
+		stats['gamma'] += w_r * posteriors.sum(axis=0)
+		stats['xi'] += w_r * log_xi_sum.sum(axis=0)
 
 	def _do_mstep(self, stats):
 		"""Performs the M-step of EM algorithm.
@@ -452,13 +461,13 @@ class GroupLevelHMM(_BaseHMM):
 		time_means_prior = self.time_means_prior
 		time_means_weight = self.time_means_weight
 
-		denom = stats['post'][:, np.newaxis]
+		# denom = stats['post'][:, np.newaxis]
 
 		if 'm' in self.params:  # if we update means
-			self.loc_means_ = ((loc_means_weight * loc_means_prior + stats['loc_obs'])
-						   / (loc_means_weight + denom))
-			self.time_means_ = ((time_means_weight * time_means_prior + stats['time_obs'])
-						   / (time_means_weight + denom))
+			self.loc_means_ = ((loc_means_weight * loc_means_prior + stats['loc_obs_for_mean'])
+						   / (loc_means_weight + stats['gamma'][:,None]))
+			self.time_means_ = ((time_means_weight * time_means_prior + stats['time_obs_for_mean'])
+						   / (time_means_weight + stats['gamma'][:,None]))
 
 		if 'c' in self.params:  # if we update covars
 			loc_covars_prior = self.loc_covars_prior
@@ -469,79 +478,40 @@ class GroupLevelHMM(_BaseHMM):
 			loc_meandiff = self.loc_means_ - loc_means_prior
 			time_meandiff = self.time_means_ - time_means_prior
 
-			if self.loc_covariance_type in ('spherical', 'diag'):
-				loc_cv_num = (loc_means_weight * loc_meandiff**2
-						  + stats['loc_obs**2']
-						  - 2 * self.loc_means_ * stats['loc_obs']
-						  + self.loc_means_**2 * denom)         # formula (4) last two parts
-
-				loc_cv_den = max(loc_covars_weight - 1, 0) + denom
-
-				self._loc_covars_ = \
-					(loc_covars_prior + loc_cv_num) / np.maximum(loc_cv_den, 1e-5)
-
-				if self.loc_covariance_type == 'spherical':
-					self._loc_covars_ = np.tile(
-						self._loc_covars_.mean(1)[:, np.newaxis],
-						(1, self._loc_covars_.shape[1]))
-
-		
-			if self.time_covariance_type in ('spherical', 'diag'):
-				time_cv_num = (time_means_weight * time_meandiff**2
-						  + stats['time_obs**2']
-						  - 2 * self.time_means_ * stats['time_obs']
-						  + self.time_means_**2 * denom)
-
-				time_cv_den = max(time_covars_weight - 1, 0) + denom
-
-				self._time_covars_ = \
-					(time_covars_prior + time_cv_num) / np.maximum(time_cv_den, 1e-5)
-
-				if self.time_covariance_type == 'spherical':
-					self._time_covars_ = np.tile(
-						self._time_covars_.mean(1)[:, np.newaxis],
-						(1, self._time_covars_.shape[1]))
-
 			if self.loc_covariance_type in ('tied', 'full'):
 				cv_num = np.empty((self.n_components, 2,
-				                2)) 	# n_features for gaussianHMM : 2
+								2)) 	# n_features for gaussianHMM : 2
 				for c in range(self.n_components):
-				  obsmean = np.outer(stats['loc_obs'][c], self.loc_means_[c])
+					obsmean = np.outer(stats['loc_obs'][c], self.loc_means_[c])
 
-				  cv_num[c] = (loc_means_weight * np.outer(loc_meandiff[c],
-				                                       loc_meandiff[c])
-				               + stats['loc_obs*obs.T'][c]
-				               - obsmean - obsmean.T
-				               + np.outer(self.loc_means_[c], self.loc_means_[c])
-				               * stats['post'][c])
+					cv_num[c] = (loc_means_weight * np.outer(loc_meandiff[c],
+													   loc_meandiff[c])
+							   + stats['loc_obs*obs.T'][c]
+							   - obsmean - obsmean.T
+							   + np.outer(self.loc_means_[c], self.loc_means_[c])
+							   * stats['post'][c])
 				cvweight = max(loc_covars_weight - 2, 0)
-				if self.loc_covariance_type == 'tied':
-				  self._loc_covars_ = ((loc_covars_prior + cv_num.sum(axis=0)) /
-				                   (cvweight + stats['post'].sum()))
-				elif self.loc_covariance_type == 'full':
-				  self._loc_covars_ = ((loc_covars_prior + cv_num) /
-				                   (cvweight + stats['post'][:, None, None]))
+				
+				self._loc_covars_ = ((loc_covars_prior + cv_num) /
+								   (cvweight + stats['gamma'][:, None, None]))
+
+				
 
 			if self.time_covariance_type in ('tied', 'full'):
 				cv_num = np.empty((self.n_components, 1,
-				                1)) 	# n_features for gaussianHMM : 2
+								1)) 	# n_features for gaussianHMM : 1
 				for c in range(self.n_components):
-				  obsmean = np.outer(stats['time_obs'][c], self.time_means_[c])
-
-				  cv_num[c] = (time_means_weight * np.outer(time_meandiff[c],
-				                                       time_meandiff[c])
-				               + stats['time_obs*obs.T'][c]
-				               - obsmean - obsmean.T
-				               + np.outer(self.time_means_[c], self.time_means_[c])
-				               * stats['post'][c])
+					obsmean = np.outer(stats['time_obs'][c], self.time_means_[c])
+			
+					cv_num[c] = (time_means_weight * np.outer(time_meandiff[c],
+													   time_meandiff[c])
+							   + stats['time_obs*obs.T'][c] - obsmean - obsmean.T
+							   + np.outer(self.time_means_[c], self.time_means_[c]) * stats['post'][c])
 				cvweight = max(time_covars_weight - 1, 0)
-				if self.time_covariance_type == 'tied':
-				  self._time_covars_ = ((time_covars_prior + cv_num.sum(axis=0)) /
-				                   (cvweight + stats['post'].sum()))
-				elif self.time_covariance_type == 'full':
-				  self._time_covars_ = ((time_covars_prior + cv_num) /
-				                   (cvweight + stats['post'][:, None, None]))
+
+				self._time_covars_ = ((time_covars_prior + cv_num) /
+								   (cvweight + stats['gamma'].reshape(2,1,1)))
 
 			if 'e' in self.params:
 				self.emissionprob_ = (stats['cat_obs']
-								  / stats['cat_obs'].sum(axis=1)[:, np.newaxis])
+								  / stats['xi'])

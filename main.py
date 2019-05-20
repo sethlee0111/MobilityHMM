@@ -9,10 +9,11 @@ X_example = np.array([[40, -70, 42320, 0],
 length_example = [3, 2]
 weight_example = [1/2, 1/2]
 
-model = gmove.GroupLevelHMM(n_components=2, init_params='mce', weights=weight_example)
+model = gmove.GroupLevelHMM(n_components=2, init_params='mce')
 model.set_weights(weight_example)
 model.fit(X_example, length_example)
-# model._init(X_example, length_example, weight_example)
+
+# model._init(X_example, length_example)
 
 # obs = X_example[0:3]
 # framelogprob = model._compute_log_likelihood(obs)

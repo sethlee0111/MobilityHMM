@@ -343,11 +343,9 @@ class GroupLevelHMM(_BaseHMM):
 		stats['xi'] = np.zeros(self.n_components)
 
 		# @TODO figure out this part
-		if self.loc_covariance_type in ('tied', 'full'):
-			stats['loc_obs*obs.T'] = np.zeros((self.n_components, 2,\
-										   2))
-		if self.time_covariance_type in ('tied', 'full'):
-			stats['time_obs*obs.T'] = np.zeros((self.n_components, 1,\
+		stats['loc_obs*obs.T'] = np.zeros((self.n_components, 2,\
+									   2))
+		stats['time_obs*obs.T'] = np.zeros((self.n_components, 1,\
 										   1))
 
 		return stats
@@ -478,39 +476,35 @@ class GroupLevelHMM(_BaseHMM):
 			loc_meandiff = self.loc_means_ - loc_means_prior
 			time_meandiff = self.time_means_ - time_means_prior
 
-			if self.loc_covariance_type in ('tied', 'full'):
-				cv_num = np.empty((self.n_components, 2,
-								2)) 	# n_features for gaussianHMM : 2
-				for c in range(self.n_components):
-					obsmean = np.outer(stats['loc_obs'][c], self.loc_means_[c])
+			cv_num = np.empty((self.n_components, 2,
+							2)) 	# n_features for gaussianHMM : 2
+			for c in range(self.n_components):
+				obsmean = np.outer(stats['loc_obs'][c], self.loc_means_[c])
 
-					cv_num[c] = (loc_means_weight * np.outer(loc_meandiff[c],
-													   loc_meandiff[c])
-							   + stats['loc_obs*obs.T'][c]
-							   - obsmean - obsmean.T
-							   + np.outer(self.loc_means_[c], self.loc_means_[c])
-							   * stats['post'][c])
-				cvweight = max(loc_covars_weight - 2, 0)
-				
-				self._loc_covars_ = ((loc_covars_prior + cv_num) /
-								   (cvweight + stats['gamma'][:, None, None]))
-
-				
-
-			if self.time_covariance_type in ('tied', 'full'):
-				cv_num = np.empty((self.n_components, 1,
-								1)) 	# n_features for gaussianHMM : 1
-				for c in range(self.n_components):
-					obsmean = np.outer(stats['time_obs'][c], self.time_means_[c])
+				cv_num[c] = (loc_means_weight * np.outer(loc_meandiff[c],
+												   loc_meandiff[c])
+						   + stats['loc_obs*obs.T'][c]
+						   - obsmean - obsmean.T
+						   + np.outer(self.loc_means_[c], self.loc_means_[c])
+						   * stats['post'][c])
+			cvweight = max(loc_covars_weight - 2, 0)
 			
-					cv_num[c] = (time_means_weight * np.outer(time_meandiff[c],
-													   time_meandiff[c])
-							   + stats['time_obs*obs.T'][c] - obsmean - obsmean.T
-							   + np.outer(self.time_means_[c], self.time_means_[c]) * stats['post'][c])
-				cvweight = max(time_covars_weight - 1, 0)
+			self._loc_covars_ = ((loc_covars_prior + cv_num) /
+							   (cvweight + stats['gamma'][:, None, None]))
 
-				self._time_covars_ = ((time_covars_prior + cv_num) /
-								   (cvweight + stats['gamma'].reshape(2,1,1)))
+			cv_num = np.empty((self.n_components, 1,
+							1)) 	# n_features for gaussianHMM : 1
+			for c in range(self.n_components):
+				obsmean = np.outer(stats['time_obs'][c], self.time_means_[c])
+		
+				cv_num[c] = (time_means_weight * np.outer(time_meandiff[c],
+												   time_meandiff[c])
+						   + stats['time_obs*obs.T'][c] - obsmean - obsmean.T
+						   + np.outer(self.time_means_[c], self.time_means_[c]) * stats['post'][c])
+			cvweight = max(time_covars_weight - 1, 0)
+
+			self._time_covars_ = ((time_covars_prior + cv_num) /
+							   (cvweight + stats['gamma'].reshape(self.n_components,1,1)))
 
 			if 'e' in self.params:
 				self.emissionprob_ = (stats['cat_obs']

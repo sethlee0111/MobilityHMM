@@ -41,7 +41,7 @@ def eval_group_hmms(membership, models):
 	for i, j in iter_from_X_lengths(data, length):
 		score_sum = 0
 		for g in range(0, GROUP_NUM):
-			score_sum += model[g].score(data[i:j]) + prob_list[index][g]
+			score_sum += models[g].score(data[i:j]) + prob_list[index][g]
 		total_score += score_sum / GROUP_NUM
 		index += 1
 	return total_score / len(length)

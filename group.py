@@ -15,6 +15,8 @@ class Group():
         member = self._membership
         # X is a trajectory for each user
         p_g = self._membership.getMeanProbByGroup(self._groupId)
+        if p_g > 1:
+            raise ValueError("Probability cannot be bigger than 1")
         for userId in member.userList:
             trajectoryArray = self._trajectory.getTrajectoryByUser(userId)
             p_ugH = 0

@@ -59,12 +59,12 @@ def train_model_for_group(groupId, models, member, t):
 	models[groupId].fit(data, length)
 	print(str(groupId) + "th group done")
 
-def update_group(group):
-	group.update()
+def update_group(group, i):
+	group[i].update()
 
 def main_multiprocess():
 
-	trajectorydata = pd.read_csv("./trainTrajectory_smaller.csv")
+	trajectorydata = pd.read_csv("./trainTrajectory_final.csv")
 	member = MembershipVector(trajectorydata['UserID'].unique(), GROUP_NUM)
 	t = Trajectory(trajectorydata)
 
@@ -79,8 +79,8 @@ def main_multiprocess():
 		manager = mp.Manager()
 		model_list = manager.list(models)
 		processes = []
-		prod_x=partial(train_model_for_group, models=models, member=member, t=t)
-		model_list = p.map(prod_x, range(0, GROUP_NUM) )
+		fit_model=partial(train_model_for_group, models=models, member=member, t=t)
+		model_list = p.map(fit_model, range(0, GROUP_NUM) )
 		p.close() 
 		p.join() 
 		
@@ -93,7 +93,9 @@ def main_multiprocess():
 		manager = mp.Manager()
 		m_group_list = manager.list(group_list)
 		p = mp.Pool(processes=mp.cpu_count()-1)
-		m_group_list = p.map(update_group, m_group_list)
+		m_update_group=partial(update_group, group=m_group_list)
+		m_group_list = p.map(m_update_group, range(0, GROUP_NUM))
+		group_list = list(m_group_list)
 		p.close()
 		p.join()
 

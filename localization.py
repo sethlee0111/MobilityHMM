@@ -8,10 +8,10 @@ class Localization():
     """
     def __init__(self, df):
         self._data = df
-        self.userList = df['UserID'].unique()
-        # self.userList = []
-        # for i in range(1,80):
-        #     self.userList.append(i)
+        # self.userList = df['UserID'].unique()
+        self.userList = []
+        for i in range(1,80):
+            self.userList.append(i)
         self.dict = {}
         for userId in self.userList:
             self.dict[userId] = df.loc[df['UserID'] == userId]['Venue category ID'].unique()

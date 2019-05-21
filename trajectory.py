@@ -54,6 +54,58 @@ class Trajectory():
 
         return (data.values, length, proba, venuedDict)
 
+    def getDataByUserGroupWithoutAssignVenueID(self, users):
+        """get training data based on group without assign new VenueID
+        """
+        data = self._data
+        
+        data = data.loc[data['UserID'].isin(users)]
+        data = data.drop(columns='UserID')
+        length = np.asarray(data.groupby('Trajectory').count()['Time'])
+        data = data.drop(columns='Trajectory')
+        proba = np.ones(len(length))
+        # print(data)
+
+        return (data.values, length, proba) 
+
+    def getDataByUserGroupAssignCustomVenueID(self, users, dic):
+        """get training data based on group
+        """
+        data = self._df
+
+        data = data.drop(columns='Timegap')
+        data = data[['UserID','Latitude','Longitude','Time','Venue category name','Trajectory']]
+        # convert Time to seconds
+        data['Time'] = data['Time'].apply(lambda x: str(x)[-8:])
+        data['Time'] = data['Time'].apply(lambda x: (int(str(x)[0:2]) * 60 + int(str(x)[3:5])) * 60 + int(str(x)[6:8]) )
+        # encode venue category to id
+        
+        data = data.loc[data['UserID'].isin(users)]
+        data = data.drop(columns='UserID')
+        data['Venue category name'] 
+
+        newDic = {}
+        for key in dic:
+            value = dic[key]
+            newDic[value] = key
+        #print(newDic)
+
+        data['exist'] = data['Venue category name'].apply(lambda x : x in newDic)
+        data = data.drop(data[data['exist']==False].index)
+        data = data.drop(columns='exist')
+        
+        data['VenueID'] = data['Venue category name'].apply(lambda x : newDic[str(x)])
+        
+        data = data.drop(columns='Venue category name')
+        
+        length = np.asarray(data.groupby('Trajectory').count()['Time'])
+        data = data.drop(columns='Trajectory')
+        proba = np.ones(len(length))
+        #print(length)
+        #print(data)
+
+        return (data.values, length, proba)
+
     def getDataWithAllGroups(self, member):
         """get test data based on group, with all the group proba
         """
@@ -106,19 +158,3 @@ class Trajectory():
             #print(group.drop(columns='Trajectory'))
             arr.append(group.drop(columns='Trajectory').values)
         return arr
-
-
-
-if __name__ == "__main__":
-    trajectorydata = pd.read_csv("./trainTrajectory_final.csv")
-    member = MembershipVector(trajectorydata['UserID'].unique(), 10)
-    t = Trajectory(trajectorydata)
-    #data,length,proba, dic = t.getDataByUserGroup([1,2,3,4,5])
-    print(t.getTrajectoryByUser(2))
-    #print(proba)
-    #data,length,proba = t.getData(1, member)
-    #t.getTrajectoryByUser(1)
-    #data,length,proba = t.getDataWithAllGroups(member)
-    #print(data)
-    #print(length)
-    #print(proba)

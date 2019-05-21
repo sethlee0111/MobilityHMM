@@ -78,7 +78,7 @@ def train_model_for_group(groupId, models, member, t):
 	return models[groupId]
 
 def update_group(i, group):
-	group[i].update()
+	return group[i].update()
 
 def main_multiprocess():
 

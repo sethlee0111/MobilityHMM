@@ -9,6 +9,7 @@ import multiprocessing as mp
 from functools import partial
 import datetime
 import time
+import pickle
 
 
 N_STATES = 10

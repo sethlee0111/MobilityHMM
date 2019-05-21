@@ -39,23 +39,39 @@ def main():
 			
 		print(eval_group_hmms(member, models))
 
+def get_score_for_all_groups(index, data, prob_list, models):
+	prob_sum = 0
+	for g in range(0, GROUP_NUM):
+		prob_sum += np.exp(models[g].score(data[index])) * prob_list[index][g]
+	return prob_sum / GROUP_NUM
+
 def eval_group_hmms(membership, models):
 	trajectorydata = pd.read_csv("./testTrajectory_final.csv")
 	t = Trajectory(trajectorydata)
 	data, length, prob_list = t.getDataWithAllGroups(membership)
 	index = 0
-	avg_prob = 0
+	test_set = []
+	all_probs = [0] * len(length)
 	for i, j in iter_from_X_lengths(data, length):
-		prob_sum = 0
-		for g in range(0, GROUP_NUM):
-			prob_sum += np.exp(models[g].score(data[i:j])) * prob_list[index][g]
-		avg_prob += prob_sum / GROUP_NUM
-		index += 1
-	return np.log(avg_prob / len(length))
+		# prob_sum = 0
+		# for g in range(0, GROUP_NUM):
+		# 	prob_sum += np.exp(models[g].score(data[i:j])) * prob_list[index][g]
+		# avg_prob += prob_sum / GROUP_NUM
+		test_set.append(data[i:j])
+	manager = mp.Manager()
+	m_all_probs = manager.list(all_probs)
+	p = mp.Pool(processes=mp.cpu_count()-1)
+	get_score=partial(get_score_for_all_groups, data=test_set, prob_list=prob_list, models=models)
+	m_all_probs = p.map(get_score,  range(0, len(length)))
+	probs_sum = sum(list(m_all_probs))
+	p.close()
+	p.join()
+	return np.log(probs_sum / len(length))
+
+	
 
 def train_model_for_group(groupId, models, member, t):
 	data, length, proba = t.getData(groupId, member)
-# 	print(len(length))
 	models[groupId].set_weights(proba)
 	models[groupId].fit(data, length)
 	print(str(groupId) + "th group done")
@@ -123,7 +139,7 @@ def main_multiprocess():
 
 
 def main_test():
-	trajectorydata = pd.read_csv("./trainTrajectory_smaller.csv")
+	trajectorydata = pd.read_csv("./trainTrajectory_final.csv")
 	member = MembershipVector(trajectorydata['UserID'].unique(), GROUP_NUM)
 	t = Trajectory(trajectorydata)
 

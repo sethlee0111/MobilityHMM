@@ -51,7 +51,7 @@ class MembershipVector():
         for i in self.userList:
             userProb = self.dict[i].tolist()
             sum += userProb[groupId]
-        return sum/self.groupNum
+        return sum/len(self.userList)
 
     def setProbByGroupUser(self, prob, userId, groupId):
         self.dict[userId][groupId] = prob

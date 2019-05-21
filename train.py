@@ -101,21 +101,26 @@ def main_multiprocess():
 		model_list = p.map(fit_model, range(0, GROUP_NUM) )
 		p.close() 
 		p.join() 
+		models = list(model_list)
 		
 		print("Training complete")
 		# Grouping and update
-		models = list(model_list)
-		group_list = []
+
+		# group_list = []
+		# for i in range(0, GROUP_NUM):
+		# 	group_list.append(Group(hmm=models[i], membership=member, trajectory=t, groupId=i))
+		# manager = mp.Manager()
+		# m_group_list = manager.list(group_list)
+		# p = mp.Pool(processes=mp.cpu_count()-1)
+		# m_update_group=partial(update_group, group=m_group_list)
+		# m_group_list = p.map(m_update_group, range(0, GROUP_NUM))
+		# group_list = list(m_group_list)
+		# p.close()
+		# p.join
+
 		for i in range(0, GROUP_NUM):
-			group_list.append(Group(hmm=models[i], membership=member, trajectory=t, groupId=i))
-		manager = mp.Manager()
-		m_group_list = manager.list(group_list)
-		p = mp.Pool(processes=mp.cpu_count()-1)
-		m_update_group=partial(update_group, group=m_group_list)
-		m_group_list = p.map(m_update_group, range(0, GROUP_NUM))
-		group_list = list(m_group_list)
-		p.close()
-		p.join()
+			g = Group(hmm=models[i], membership=member, trajectory=t, groupId=i)
+			member = g.update()
 
 		print("Complete")
 		end = time.time()

@@ -55,9 +55,11 @@ def eval_group_hmms(membership, models):
 
 def train_model_for_group(groupId, models, member, t):
 	data, length, proba = t.getData(groupId, member)
+# 	print(len(length))
 	models[groupId].set_weights(proba)
 	models[groupId].fit(data, length)
 	print(str(groupId) + "th group done")
+	return models[groupId]
 
 def update_group(group, i):
 	group[i].update()

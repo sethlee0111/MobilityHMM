@@ -1,17 +1,28 @@
 import hmm as gmove
 import numpy as np
+from hmmlearn import hmm
 
-X_example = np.array([[40, -70, 42320, 0],
-					  [42, -71, 43989, 1],
-					  [38, -72, 32324, 2],
-					  [42, -70, 23222, 3],
-					  [37, -71, 81999, 3]])
+# X_example = np.array([[40, -70, 42320, 0],
+# 					  [42, -71, 43989, 1],
+# 					  [38, -72, 32324, 2],
+# 					  [42, -70, 23222, 3],
+# 					  [37, -71, 81999, 3]])
 length_example = [3, 2]
 weight_example = [1/2, 1/2]
 
-model = gmove.GroupLevelHMM(n_components=2, init_params='mce')
-model.set_weights(weight_example)
+
+X_example = np.array([[0],
+					  [0],
+					  [0],
+					  [1]])
+
+# model = gmove.GroupLevelHMM(n_components=2, init_params='mce')
+# model.set_weights(weight_example)
+# model.fit(X_example, length_example)
+
+model = hmm.MultinomialHMM(n_components=3)
 model.fit(X_example, length_example)
+print(model.score(X_example))
 
 # model._init(X_example, length_example)
 

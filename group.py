@@ -16,7 +16,7 @@ class Group():
         # X is a trajectory for each user
         p_g = self._membership.getMeanProbByGroup(self._groupId)
         if p_g > 1:
-            raise ValueError("Probability cannot be bigger than 1 (total)")
+            raise ValueError("Probability cannot be bigger than 1")
         for userId in member.userList:
             trajectoryArray = self._trajectory.getTrajectoryByUser(userId)
             p_ugH = 0
@@ -25,12 +25,7 @@ class Group():
             p_guH = p_ugH + np.log(p_g)
             p_guH = np.exp(p_guH)
             member.setProbByGroupUser(p_guH, userId, self._groupId)
-            if p_guH > 1:
-                raise ValueError("Probability cannot be bigger than 1")
-            
-        self._membership = member
+
+        member.normalize()
+
         return member
-
-    def update_new(self):
-        return self._membership.getMembershipGroupStructure()[self._groupId]
-

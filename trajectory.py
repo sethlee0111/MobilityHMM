@@ -92,6 +92,7 @@ class Trajectory():
 
         data['exist'] = data['Venue category name'].apply(lambda x : x in newDic)
         
+        trajectorys = set()
         for index in data[data['exist']==False].index:
             trajectory = (data.loc[index]['Trajectory'])
             trajectorys.add(trajectory)

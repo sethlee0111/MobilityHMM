@@ -8,17 +8,17 @@ import datetime
 import pickle
 
 states = 10
-groupNum = 10
+groupNum = 15
 
 def main():
     venueData = pd.read_csv("./VenueID_data.csv")
     l = Localization(venueData)
-    trajectorydata = pd.read_csv("./trainTrajectory_smaller.csv")
+    trajectorydata = pd.read_csv("./trainTrajectory_final.csv")
     #print(trajectorydata["VenueID"].describe())
     t = Trajectory(trajectorydata)
     usersgroup = l.grouping(groupNum)
 
-    testtrajectorydata = pd.read_csv("./testTrajectory_smaller.csv") 
+    testtrajectorydata = pd.read_csv("./testTrajectory_final.csv") 
     testTrajectory = Trajectory(testtrajectorydata)
 
 
@@ -28,6 +28,7 @@ def main():
         s = pickle.dump(models[i], output)
         output.close()
 
+    for i in range(0,len(models)):
         eval_loc_model(testTrajectory=testTrajectory, model=models[i], users=usersgroup[i], dic=dics[i])
         
 def train(usersgroup, trajectory):
@@ -75,10 +76,10 @@ def loadModel_eval():
     testTrajectory = Trajectory(testtrajectorydata)
     for i in range(0, len(models)):
         print(str(datetime.datetime.now()) + "   eval model "+ str(i))
-        data, length, prob, dic = testTrajectory.getDataByUserGroup(usersgroup[i])
+        data, length, prob, dic = testTrajectory.get(usersgroup[i])
         print(models[i].score(data,length)/len(length))
     eval_loc_model(models, usersgroup)
 
 if __name__=='__main__':
-    loadModel_eval()
-    # main()
+    #loadModel_eval()
+    main()

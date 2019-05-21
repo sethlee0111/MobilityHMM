@@ -26,6 +26,4 @@ class Group():
             p_guH = np.exp(p_guH)
             member.setProbByGroupUser(p_guH, userId, self._groupId)
 
-        member.normalize()
-
         return member

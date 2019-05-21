@@ -82,6 +82,14 @@ class MembershipVector():
         
         return groups
 
+    def setMembershipByGroupStructure(self, groupStructure):
+        for i in range(0,len(groupStructure)):
+            for key in groupStructure[i]:
+                self.dict[key][i] = groupStructure[i][key]
+        return self
+
 if __name__=='__main__':
     m = MembershipVector([1,2,3,4,5,6,7,8,9,10], 5)
     print(m.getMembershipGroupStructure())
+    l = m.getMembershipGroupStructure()
+    m.setMembershipByGroupStructure(l)

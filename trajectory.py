@@ -91,7 +91,14 @@ class Trajectory():
         #print(newDic)
 
         data['exist'] = data['Venue category name'].apply(lambda x : x in newDic)
-        data = data.drop(data[data['exist']==False].index)
+        
+        for index in data[data['exist']==False].index:
+            trajectory = (data.loc[index]['Trajectory'])
+            trajectorys.add(trajectory)
+    
+        for trajectory in trajectorys:
+            data = data.drop(data[data['Trajectory'] == trajectory].index)
+            
         data = data.drop(columns='exist')
         
         data['VenueID'] = data['Venue category name'].apply(lambda x : newDic[str(x)])

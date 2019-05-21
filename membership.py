@@ -23,14 +23,13 @@ class MembershipVector():
         Get the probability that the user belongs to this group
         """
         return self.dict[userId].tolist()[groupId]
-
+    
     def getProbByUserId(self, userId):
         """
         Args:
             return group prob list of the input user
         """
         return self.dict[userId].tolist()
-
 
     def getUserByGroup(self, groupId):
         """
@@ -73,6 +72,16 @@ class MembershipVector():
         for key in self.dict:
             self.dict[key] = np.concatenate(normalize(self.dict[key].reshape(1,-1)))
 
+    def getMembershipGroupStructure(self):
+        groups = []
+        for i in range(0, self.groupNum):
+            dic_group = {}
+            for j in self.userList:
+                dic_group[j] = self.dict[j][i]
+            groups.append(dic_group)
+        
+        return groups
 
-
-
+if __name__=='__main__':
+    m = MembershipVector([1,2,3,4,5,6,7,8,9,10], 5)
+    print(m.getMembershipGroupStructure())

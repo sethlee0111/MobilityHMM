@@ -62,21 +62,23 @@ def eval_loc_model(testTrajectory, model, users, dic):
     data, length, prob = testTrajectory.getDataByUserGroupAssignCustomVenueID(users, dic)
     print(model.score(data,length)/len(length))
 
-# def loadModel_eval():
-#     venueData = pd.read_csv("./VenueID_data.csv")
-#     l = Localization(venueData)
-#     trajectorydata = pd.read_csv("./trainTrajectory_final.csv")
-#     #print(trajectorydata["VenueID"].describe())
-#     t = Trajectory(trajectorydata)
-#     usersgroup = l.grouping(groupNum)
-#     models = []
-#     models = load_models(models)
-#     for i in range(0, len(models)):
-#         print(str(datetime.datetime.now()) + "   eval model "+ str(i))
-#         data, length, prob, dic = testTrajectory.getDataByUserGroup(usersgroup[i])
-#         print(models[i].score(data,length)/len(length))
-#     eval_loc_model(models, usersgroup)
+def loadModel_eval():
+    venueData = pd.read_csv("./VenueID_data.csv")
+    l = Localization(venueData)
+    trajectorydata = pd.read_csv("./trainTrajectory_final.csv")
+    #print(trajectorydata["VenueID"].describe())
+    t = Trajectory(trajectorydata)
+    usersgroup = l.grouping(groupNum)
+    models = []
+    models = load_models(models)
+    testtrajectorydata = pd.read_csv("./testTrajectory_smaller.csv") 
+    testTrajectory = Trajectory(testtrajectorydata)
+    for i in range(0, len(models)):
+        print(str(datetime.datetime.now()) + "   eval model "+ str(i))
+        data, length, prob, dic = testTrajectory.getDataByUserGroup(usersgroup[i])
+        print(models[i].score(data,length)/len(length))
+    eval_loc_model(models, usersgroup)
 
 if __name__=='__main__':
-    # loadModel_eval()
-    main()
+    loadModel_eval()
+    # main()

@@ -28,4 +28,4 @@ class Group():
 
         member.normalize()
 
-        return member
+        return member.getMembershipGroupStructure(self._groupId)
